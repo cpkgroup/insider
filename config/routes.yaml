@@ -3,4 +3,27 @@
 #    controller: App\Controller\DefaultController::index
 
 # API routes
+create_team:
+  path: /api/team
+  controller: App\Controller\LeagueController::createTeamAction
+  methods: [POST]
 
+create_league:
+  path: /api/league
+  controller: App\Controller\LeagueController::createLeagueAction
+  methods: [POST]
+
+show_week:
+  path: /api/show_week
+  controller: App\Controller\LeagueController::showWeekAction
+  methods: [GET]
+
+play_all_match:
+  path: /api/play_all_match
+  controller: App\Controller\LeagueController::playAllMatchAction
+  methods: [GET]
+
+update_match:
+  path: /api/update_match
+  controller: App\Controller\LeagueController::updateMatchAction
+  methods: [POST]

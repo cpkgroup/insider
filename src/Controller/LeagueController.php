@@ -54,6 +54,8 @@ class LeagueController extends AbstractController
 
     /**
      *
+     * @param LeagueService $leagueService
+     * @param Request $request
      * @return JsonResponse
      */
     public function showWeekAction(LeagueService $leagueService, Request $request)
@@ -62,11 +64,21 @@ class LeagueController extends AbstractController
         $leagueId = (int)$request->get('leagueId');
 
         $table = $leagueService->getTable($leagueId, $week);
+
         // sort the table
         $table = $leagueService->sortLeagueTable($table);
 
+        // calculate chance
+        $table = $leagueService->calculateChance($table, $week);
+
+        $matches = [];
+        if ($week) {
+            $matches = $leagueService->getMatches($leagueId, $week);
+        }
+
         return new JsonResponse([
-            'data' => $table,
+            'matches' => $matches,
+            'table' => $table,
             'status' => 'succeed',
         ], JsonResponse::HTTP_OK);
     }
@@ -84,12 +96,7 @@ class LeagueController extends AbstractController
 
         $leagueService->playWeek($leagueId, $week);
 
-        $table = $leagueService->getTable($leagueId, $week);
-        // sort the table
-        $table = $leagueService->sortLeagueTable($table);
-
         return new JsonResponse([
-            'data' => $table,
             'status' => 'succeed',
         ], JsonResponse::HTTP_OK);
     }
@@ -106,12 +113,7 @@ class LeagueController extends AbstractController
 
         $leagueService->playAll($leagueId);
 
-        $table = $leagueService->getTable($leagueId);
-        // sort the table
-        $table = $leagueService->sortLeagueTable($table);
-
         return new JsonResponse([
-            'data' => $table,
             'status' => 'succeed',
         ], JsonResponse::HTTP_OK);
     }

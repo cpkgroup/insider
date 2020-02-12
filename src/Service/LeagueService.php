@@ -99,14 +99,69 @@ class LeagueService
                 $leagueTable[$match->getTeamHost()->getId()] ?? [],
                 $match->getGoalsHost(),
                 $match->getGoalsGuest(),
+                $match->getTeamHost()->getId(),
                 $match->getTeamHost()->getName()
             );
             $leagueTable[$match->getTeamGuest()->getId()] = $this->updateLeagueRow(
                 $leagueTable[$match->getTeamGuest()->getId()] ?? [],
                 $match->getGoalsGuest(),
                 $match->getGoalsHost(),
+                $match->getTeamGuest()->getId(),
                 $match->getTeamGuest()->getName()
             );
+        }
+
+        return array_values($leagueTable);
+    }
+
+    /**
+     * @param $leagueId
+     * @param $weekNumber
+     * @return array
+     */
+    public function getMatches($leagueId, $weekNumber)
+    {
+        $matchRepository = $this->entityManager->getRepository(Match::class);
+        $matches = $matchRepository->findWeekMatches($leagueId, $weekNumber);
+        $resultTable = [];
+        /** @var Match $match */
+        foreach ($matches as $match) {
+            $resultTable[] = [
+                'host' => $match->getTeamHost()->getName(),
+                'goalsHost' => $match->getGoalsHost(),
+                'gust' => $match->getTeamGuest()->getName(),
+                'goalsGuest' => $match->getGoalsGuest(),
+                'playedAt' => $match->getPlayedAt() ? $match->getPlayedAt()->format('Y-m-d H:i') : null,
+            ];
+        }
+
+        return $resultTable;
+    }
+
+    /**
+     * @param $leagueTable
+     * @return mixed
+     */
+    public function calculateChance($leagueTable, $week = null)
+    {
+        // @TODO upgrade this algorithm
+        $teams = count($leagueTable);
+        $weeks = ($teams - 1) * 2; // home and away
+        $matchesPerWeek = $teams / 2;
+        $matches = $weeks * $matchesPerWeek;
+
+        $allPossiblePoints = $week ? ($matches - $week) * 3 : 0;
+        $sumAchievedPoints = array_sum(array_column($leagueTable, 'PTS'));
+
+        if (!$allPossiblePoints) {
+            foreach ($leagueTable as $key => $item) {
+                $leagueTable[$key]['chance'] = $key == 0 ? 100 : 0;
+            }
+            return $leagueTable;
+        }
+
+        foreach ($leagueTable as $key => $item) {
+            $leagueTable[$key]['chance'] = round($item['PTS'] / ($allPossiblePoints + $sumAchievedPoints) * 100);
         }
 
         return $leagueTable;
@@ -116,12 +171,15 @@ class LeagueService
      * @param $team
      * @param $goalScored
      * @param $goalReceived
+     * @param $teamId
+     * @param $teamName
      * @return mixed
      */
-    protected function updateLeagueRow($team, $goalScored, $goalReceived, $teamName)
+    protected function updateLeagueRow($team, $goalScored, $goalReceived, $teamId, $teamName)
     {
-        if (!isset($team['Team'])) {
-            $team['Team'] = $teamName;
+        if (!isset($team['TeamId'])) {
+            $team['TeamId'] = $teamId;
+            $team['TeamName'] = $teamName;
             $team['PTS'] = $this->getPoint($goalScored, $goalReceived);
             $team['P'] = 1;
             $team['W'] = $this->isWinner($goalScored, $goalReceived) ? 1 : 0;
@@ -151,7 +209,7 @@ class LeagueService
     {
         uasort($leagueTable, [new GeneralComparator(), 'compare']);
 
-        return $leagueTable;
+        return array_values($leagueTable);
     }
 
     /**
