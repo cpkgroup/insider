@@ -18,6 +18,21 @@ show_week:
   controller: App\Controller\LeagueController::showWeekAction
   methods: [GET]
 
+show_leagues:
+  path: /api/show_leagues
+  controller: App\Controller\LeagueController::showLeaguesAction
+  methods: [GET]
+
+show_teams:
+  path: /api/show_teams
+  controller: App\Controller\LeagueController::showTeamsAction
+  methods: [GET]
+
+play_match:
+  path: /api/play_match
+  controller: App\Controller\LeagueController::playMatchAction
+  methods: [GET]
+
 play_all_match:
   path: /api/play_all_match
   controller: App\Controller\LeagueController::playAllMatchAction
