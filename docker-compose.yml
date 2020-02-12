@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  php:
+    container_name: php
+    build: ./docker/php
+    volumes:
+      - .:/www
+
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+      - vuejs
+
+  vuejs:
+    container_name: vuejs
+    build: ./vuejs
+    volumes:
+      - ./vuejs:/www
+      - /www/node_modules
+
+  mysql:
+    container_name: mysql
+    image: mysql:5.7.25
+    restart: always
+    environment:
+      - MYSQL_DATABASE=league
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=admin
+      - MYSQL_ROOT_PASSWORD=secret
+    ports:
+      - "3306:3306"
