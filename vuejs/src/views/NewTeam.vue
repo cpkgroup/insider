@@ -24,7 +24,7 @@
                     class="mr-4"
                     @click="createPost()"
             >
-                Send
+                Create
                 <v-icon dark right>mdi-checkbox-marked-circle</v-icon>
             </v-btn>
 
@@ -60,7 +60,7 @@
         methods: {
             createPost() {
                 this.snackbar = true;
-                this.snackbarText = "Is Loading...";
+                this.snackbarText = "Is sending...";
                 this.$http
                     .post("team", {
                         name: this.formData.name,
