@@ -4,6 +4,9 @@ namespace App\Service;
 
 use App\Entity\League;
 use App\Entity\Match;
+use App\Service\Compare\GeneralComparator;
+use App\Service\Compare\GoalDiffComparator;
+use App\Service\Compare\ScoreComparator;
 use Doctrine\ORM\EntityManagerInterface;
 
 class LeagueService
@@ -67,8 +70,8 @@ class LeagueService
      */
     public function playAll($leagueId)
     {
-        $leagueRepository = $this->entityManager->getRepository(Match::class);
-        $matches = $leagueRepository->findAllMatches($leagueId);
+        $matchRepository = $this->entityManager->getRepository(Match::class);
+        $matches = $matchRepository->findAllMatches($leagueId);
 
         /** @var Match $match */
         foreach ($matches as $match) {
@@ -78,6 +81,77 @@ class LeagueService
         }
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * @param $leagueId
+     * @param $weekNumber
+     * @return array
+     */
+    public function getTable($leagueId, $weekNumber = null)
+    {
+        $matchRepository = $this->entityManager->getRepository(Match::class);
+        $matches = $matchRepository->findMatchesUntilWeek($leagueId, $weekNumber);
+        $leagueTable = [];
+        /** @var Match $match */
+        foreach ($matches as $match) {
+            $leagueTable[$match->getTeamHost()->getId()] = $this->updateLeagueRow(
+                $leagueTable[$match->getTeamHost()->getId()] ?? [],
+                $match->getGoalsHost(),
+                $match->getGoalsGuest(),
+                $match->getTeamHost()->getName()
+            );
+            $leagueTable[$match->getTeamGuest()->getId()] = $this->updateLeagueRow(
+                $leagueTable[$match->getTeamGuest()->getId()] ?? [],
+                $match->getGoalsGuest(),
+                $match->getGoalsHost(),
+                $match->getTeamGuest()->getName()
+            );
+        }
+
+        return $leagueTable;
+    }
+
+    /**
+     * @param $team
+     * @param $goalScored
+     * @param $goalReceived
+     * @return mixed
+     */
+    protected function updateLeagueRow($team, $goalScored, $goalReceived, $teamName)
+    {
+        if (!isset($team['Team'])) {
+            $team['Team'] = $teamName;
+            $team['PTS'] = $this->getPoint($goalScored, $goalReceived);
+            $team['P'] = 1;
+            $team['W'] = $this->isWinner($goalScored, $goalReceived) ? 1 : 0;
+            $team['D'] = $this->isDraw($goalScored, $goalReceived) ? 1 : 0;
+            $team['L'] = $this->isLooser($goalScored, $goalReceived) ? 1 : 0;
+            $team['GD'] = $goalScored - $goalReceived;
+            $team['GF'] = $goalScored;
+            $team['GA'] = $goalReceived;
+        } else {
+            $team['PTS'] += $this->getPoint($goalScored, $goalReceived);
+            $team['P'] += 1;
+            $team['W'] += $this->isWinner($goalScored, $goalReceived) ? 1 : 0;
+            $team['D'] += $this->isDraw($goalScored, $goalReceived) ? 1 : 0;
+            $team['L'] += $this->isLooser($goalScored, $goalReceived) ? 1 : 0;
+            $team['GD'] += $goalScored - $goalReceived;
+            $team['GF'] += $goalScored;
+            $team['GA'] += $goalReceived;
+        }
+        return $team;
+    }
+
+    /**
+     * @param $leagueTable
+     * @return mixed
+     */
+    public function sortLeagueTable($leagueTable)
+    {
+        uasort($leagueTable, [new GeneralComparator(), 'compare']);
+
+        return $leagueTable;
     }
 
     /**
@@ -97,5 +171,60 @@ class LeagueService
             array_slice($teams, 0, $half),
             array_reverse(array_slice($teams, $half))
         ];
+    }
+
+    /**
+     * @param $goalScored
+     * @param $goalReceived
+     * @return int
+     */
+    protected function getPoint($goalScored, $goalReceived)
+    {
+        if ($goalScored == $goalReceived) {
+            return 1;
+        }
+        if ($goalScored > $goalReceived) {
+            return 3;
+        }
+        return 0;
+    }
+
+    /**
+     * @param $goalScored
+     * @param $goalReceived
+     * @return int
+     */
+    protected function isWinner($goalScored, $goalReceived)
+    {
+        if ($goalScored > $goalReceived) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param $goalScored
+     * @param $goalReceived
+     * @return int
+     */
+    protected function isLooser($goalScored, $goalReceived)
+    {
+        if ($goalScored < $goalReceived) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param $goalScored
+     * @param $goalReceived
+     * @return int
+     */
+    protected function isDraw($goalScored, $goalReceived)
+    {
+        if ($goalScored == $goalReceived) {
+            return true;
+        }
+        return false;
     }
 }

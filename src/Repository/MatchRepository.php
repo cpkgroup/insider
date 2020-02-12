@@ -51,4 +51,39 @@ class MatchRepository extends EntityRepository
         $entityManager->persist($match);
         return $match;
     }
+
+    /**
+     * @param $matchId
+     * @param $teamHostGoal
+     * @param $teamGuestGoal
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function updateMatch($matchId, $teamHostGoal, $teamGuestGoal)
+    {
+        $match = $this->find($matchId);
+        $match->setTeamHost($teamHostGoal);
+        $match->setTeamGuest($teamGuestGoal);
+        $entityManager = $this->getEntityManager();
+        $entityManager->flush();
+    }
+
+    /**
+     * @param $leagueId
+     * @param $weekNumber
+     * @return mixed
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function findMatchesUntilWeek($leagueId, $weekNumber = null)
+    {
+        $builder = $this->createQueryBuilder('m')
+            ->where('m.league = :league')->setParameter('league', $leagueId);
+
+        if ($weekNumber) {
+            $builder->andWhere('m.weekNumber <= :weekNumber')->setParameter('weekNumber', $weekNumber);
+        }
+
+        return $builder->getQuery()
+            ->getResult();
+    }
 }

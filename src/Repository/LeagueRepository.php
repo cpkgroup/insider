@@ -23,13 +23,4 @@ class LeagueRepository extends EntityRepository
 
         return $league;
     }
-
-    /**
-     * @param int $leagueId
-     * @return array
-     */
-    public function findAllMatches($leagueId)
-    {
-        return $this->findBy(['league' => $leagueId]);
-    }
 }
