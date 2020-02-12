@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @ORM\Table(name="league")
  * @ORM\Entity
+ * @ORM\Entity(repositoryClass="App\Repository\LeagueRepository")
  */
 class League
 {
@@ -28,5 +29,39 @@ class League
      */
     private $name;
 
+    /**
+     * @return int
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
+    /**
+     * @param int $id
+     * @return League
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param null|string $name
+     * @return League
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
 }
