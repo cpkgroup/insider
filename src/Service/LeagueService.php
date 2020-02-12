@@ -95,6 +95,9 @@ class LeagueService
         $leagueTable = [];
         /** @var Match $match */
         foreach ($matches as $match) {
+            if (!$match->getPlayedAt()) {
+                $this->matchService->playGame($match);
+            }
             $leagueTable[$match->getTeamHost()->getId()] = $this->updateLeagueRow(
                 $leagueTable[$match->getTeamHost()->getId()] ?? [],
                 $match->getGoalsHost(),
@@ -110,6 +113,7 @@ class LeagueService
                 $match->getTeamGuest()->getName()
             );
         }
+        $this->entityManager->flush();
 
         return array_values($leagueTable);
     }

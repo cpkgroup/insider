@@ -37,8 +37,13 @@ docker-compose run php bin/console doctrine:schema:update --force  # generate my
 - VueJS
 
 ## TODOs
-- Write tests
-- Do some refactor
+- Write functional and unit tests
+- Write validations
+- Write edit match in VueJs (API is exist for it)
+- Follow PSR and use php-cs-fixer
+- Add docs for APIs
+- Add doc blocks for all functions
+- Optimization playGame
 
 ## Author
 - [Mohamad Habibi](https://www.linkedin.com/in/habibimh) 

@@ -43,8 +43,11 @@ class LeagueController extends AbstractController
      */
     public function createLeagueAction(LeagueService $leagueService, Request $request)
     {
-        $name = $request->get('name');
-        $teams = $request->get('teams');
+        $data = json_decode($request->getContent(), true);
+        $name = $data['name'] ?? '';
+        $teams = $data['teams'] ?? [];
+        $teams = array_filter($teams);
+        $teams = array_slice($teams, 0, 4);
 
         // @TODO validation for teams
         $leagueService->createLeague($name, $teams);

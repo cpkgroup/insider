@@ -68,20 +68,15 @@
         </v-simple-table>
 
 
-        <router-link :to="'/league/' + $route.params.id + '/week/' + nextWeek">
-            <v-btn x-small :hidden="loading" color="primary" @click="playMatch">
-                Play
-            </v-btn>
-        </router-link>
-        &nbsp;
-        <router-link :to="'/league/' + $route.params.id + '/week/1'" :hidden="loading">
+        <router-link :to="'/league/' + $route.params.id + '/week/' + weeks" :hidden="loading">
             <v-btn x-small color="primary" @click="playAllMatch">
                 Play all
             </v-btn>
         </router-link>
         &nbsp;
-        <router-link :hidden="loading" :to="'/league/' + $route.params.id + '/week/' + nextWeek">
-            <v-btn x-small color="primary" @click="fetchData">
+        <router-link :hidden="loading"
+                     :to="'/league/' + $route.params.id + '/week/' + (parseInt($route.params.week) + 1)">
+            <v-btn x-small color="primary" @click="fetchData(parseInt($route.params.week) + 1)">
                 Next week
             </v-btn>
         </router-link>
@@ -97,38 +92,24 @@
                 teams: [],
                 matches: [],
                 loading: true,
-                nextWeek: 2,
+                weeks: null,
             };
         },
         created() {
-            this.fetchData();
+            this.fetchData(1);
         },
         methods: {
-            fetchData() {
+            fetchData(weekId) {
                 this.loading = true;
                 this.$http
-                    .get("show_week?leagueId=" + this.$route.params.id + '&week=' + this.$route.params.week)
+                    .get("show_week?leagueId=" + this.$route.params.id + '&week=' + weekId)
                     .then(response => {
                         this.teams = response.data.table;
                         this.matches = response.data.matches;
                         this.loading = false;
-                        this.nextWeek = parseInt(this.$route.params.week) + 1;
-                        this.nextWeek = response.data.weeks > this.nextWeek ? this.nextWeek : response.data.weeks;
+                        this.weeks = response.data.weeks;
 
-                    })
-                    .catch(e => {
-                        console.error(e);
-                    });
-            },
-            playMatch() {
-                this.loading = true;
-                this.$http
-                    .get("play_match?leagueId=" + this.$route.params.id + '&week=' + this.$route.params.week)
-                    .then(response => {
-                        this.loading = false;
-                        this.nextWeek = parseInt(this.$route.params.week) + 1;
-                        this.nextWeek = response.data.weeks > this.nextWeek ? this.nextWeek : response.data.weeks;
-                        this.fetchData();
+
                     })
                     .catch(e => {
                         console.error(e);
@@ -140,8 +121,7 @@
                     .get("play_all_match?leagueId=" + this.$route.params.id)
                     .then(response => {
                         this.loading = false;
-                        this.nextWeek = 2;
-                        this.fetchData();
+                        this.fetchData(this.weeks);
                     })
                     .catch(e => {
                         console.error(e);

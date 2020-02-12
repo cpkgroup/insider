@@ -1,8 +1,7 @@
 <template>
     <v-content>
-        <h1>TODO FIX THIS PAGE</h1>
         <h1>New League</h1>
-        <v-form ref="form" v-model="valid" @input="fetchData">
+        <v-form ref="form" v-model="valid">
             <v-text-field
                     v-model="formData.name"
                     :rules="[rules.required]"
@@ -11,14 +10,9 @@
                     required
             ></v-text-field>
 
-            <v-select
-                    v-model="selectedTeams"
-                    :items="teams"
-                    multiple="true"
-                    label="Teams"
-                    hint="Please choose 4 teams"
-            >
-            </v-select>
+            <p>Please choose just 4 team:</p>
+
+            <v-checkbox v-model="formData.teams[team.id]" v-for="team of teams" v-bind:key="team.id" :label="team.name" :value="team.id"></v-checkbox>
 
             <v-btn
                     :disabled="!valid"
@@ -46,7 +40,6 @@
         name: "new",
         data() {
             return {
-                selectedTeams: [],
                 teams: [],
                 valid: true,
                 snackbar: false,
@@ -54,18 +47,22 @@
                 // form data here
                 formData: {
                     name: "",
-                    strength: "",
+                    teams: [],
                 },
                 rules: {
                     required: value => !!value || "Required"
                 }
             };
         },
+        mounted: function () {
+            this.fetchData();
+        },
         methods: {
             fetchData() {
                 this.$http
                     .get("show_teams")
                     .then(response => {
+
                         this.teams = response.data.teams;
                     })
                     .catch(e => {
@@ -73,12 +70,15 @@
                     });
             },
             createPost() {
+
+                console.log(this.formData.teams);
+
                 this.snackbar = true;
                 this.snackbarText = "Is Loading...";
                 this.$http
-                    .post("team", {
+                    .post("league", {
                         name: this.formData.name,
-                        strength: this.formData.strength
+                        teams: this.formData.teams
                     })
                     .then(response => {
                         if (response && response.status) {
